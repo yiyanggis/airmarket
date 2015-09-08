@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<!-- saved from url=(0057)http://leafletjs.com/examples/layers-control-example.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Leaflet Layers Control Example</title>
+	<meta charset="utf-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="http://leafletjs.com/dist/leaflet.css">
+	<link rel="stylesheet" href="css/leaflet.draw.css">
+	<link rel="stylesheet" href="css/bootstrap.css">
+	<!--<link rel="stylesheet" href="css/leaflet.control.orderlayers.css">-->
+	<style>
+
+		div .row{
+			margin-bottom: 10px;
+		}
+	</style>
+</head>
+<body>
+	<div class="row" style="margin:20px;">
+		<div class="col-md-8">
+			<div id="map" style="width: 100%; height: 800px; "></div>
+		</div>
+		<div class="col-md-4">
+			
+			<div class="row">
+				<div id="control">
+					<input type="text" class="form-control" id="filterInput" placeholder="1000">
+					<p><a class="btn btn-primary btn-lg" href="#" role="button" id="filterBtn">filter</a></p>
+				</div>
+			</div>
+			<div class="row">
+				<div>
+					<button id="identifyBtn" type="button" class="btn btn-primary" data-toggle="button" aria-pressed="true" autocomplete="off">
+					  Identify
+					</button>
+				</div>
+			</div>
+			<div class="row">
+				<div>
+					<!-- Provides extra visual weight and identifies the primary action in a set of buttons -->
+					<button id="drawMarkerBtn" type="button" class="btn btn-primary">draw marker</button>
+					<button id="drawCircle3mi" type="button" class="btn btn-primary">draw 3 mile circle</button>
+					<button id="drawCircle9mi" type="button" class="btn btn-primary">draw 9 mile circle</button>
+				</div>
+			</div>
+
+			<div class="row">
+				<p id="result_info"></p>
+				<ul id="result_info_list"></ul>
+			</div>
+		</div
+	</div>
+
+	<script src="js/leaflet.js"></script>
+	<script src="http://maps.google.com/maps/api/js?v=3&sensor=false"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script src="js/bootstrap.js"></script>
+	<script src="js/leaflet.draw-src.js"></script>
+	<script src="js/map2.js"></script>
+	<!--<script src="js/leaflet.control.orderlayers.js"></script>-->
+	<script src="js/leaflet-providers.js"></script>
+	<script src="js/Google.js"></script>
+	<script>
+
+		var result_markers=[];
+		var map;
+		var criteria;
+		var airspace_data_b,airspace_data_c,airspace_data_d,airspace_data_e,airspace_data_f;
+		var airspace_b,airspace_c,airspace_d,airspace_e,airspace_f;
+
+		var mapStatus=null;
+		var mapStatusMode={DrawPoint:1,Identify:2,Null:null};
+
+		var marker;
+
+		var circlePrimary, circleFlyAway;
+
+		var METER_PER_UNIT={MILE:1609.34, FOOT:0.3048,DEGREE:111194.87428468118, KM:1000};
+
+		var identifyLatlng;
+		// var cities = new L.LayerGroup();
+
+		// L.marker([39.61, -105.02]).bindPopup('This is Littleton, CO.').addTo(cities),
+		// L.marker([39.74, -104.99]).bindPopup('This is Denver, CO.').addTo(cities),
+		// L.marker([39.73, -104.8]).bindPopup('This is Aurora, CO.').addTo(cities),
+		// L.marker([39.77, -105.23]).bindPopup('This is Golden, CO.').addTo(cities);
+
+		// create the tile layer with correct attribution
+	
+
+		//L.DomUtil.get('changeColor').onclick = function () {
+		//	drawControl.setDrawingOptions({ rectangle: { shapeOptions: { color: '#004a80' } } });
+		//};
+		$(document).ready(function(){
+			map=initmap('map');
+
+			//test add point function
+			//add_Point(10,10,map);
+			//add_Point(20,20,map);
+
+			$("#drawMarkerBtn").click(function(){
+				$(this).toggleClass('btn-success')
+
+				if(mapStatus==null){
+					$('.leaflet-container').css('cursor','crosshair');
+					
+					mapStatus=mapStatusMode.DrawPoint;
+					//map.on('dblclick', onMapDrawPoint);
+					map.on('contextmenu', onMapDrawPoint_green);
+
+					airspace_b.on('contextmenu', onMapDrawPoint_orange);
+					airspace_c.on('contextmenu', onMapDrawPoint_orange);
+					airspace_d.on('contextmenu', onMapDrawPoint_orange);
+					airspace_e.on('contextmenu', onMapDrawPoint_orange);
+
+					airspace_f.on('contextmenu', onMapDrawPoint_red);
+				}
+				else if(mapStatus==mapStatusMode.DrawPoint){
+					$('.leaflet-container').css('cursor','-webkit-grab');
+					mapStatus=mapStatusMode.Null;
+					//map.off('dblclick', onMapDrawPoint);
+					map.off('contextmenu', onMapDrawPoint_green);
+
+					airspace_b.off('contextmenu', onMapDrawPoint_orange);
+					airspace_c.off('contextmenu', onMapDrawPoint_orange);
+					airspace_d.off('contextmenu', onMapDrawPoint_orange);
+					airspace_e.off('contextmenu', onMapDrawPoint_orange);
+
+					airspace_f.off('contextmenu', onMapDrawPoint_red);
+				}
+			});
+
+			$("#identifyBtn").click(function(){
+				$(this).toggleClass('btn-success')
+
+				if(mapStatus==null){
+					$('.leaflet-container').css('cursor','help');
+					
+					mapStatus=mapStatusMode.Identify;
+					map.on('click', onMapIdentify);
+				}
+				else if(mapStatus==mapStatusMode.Identify){
+					$('.leaflet-container').css('cursor','-webkit-grab');
+					mapStatus=mapStatusMode.Null;
+					map.off('click', onMapIdentify);
+				}
+			});
+
+			$("#drawCircle3mi").click(function(){
+				add_Circle(marker.getLatLng(), 1.5*METER_PER_UNIT.KM,map)
+			});
+
+			$("#drawCircle9mi").click(function(){
+				add_Circle(marker.getLatLng(), 4.5*METER_PER_UNIT.KM,map)
+			});
+		});
+		
+			
+
+	</script>
+
+
+</body></html>
