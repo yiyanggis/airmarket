@@ -50,6 +50,11 @@
 				<p id="result_info"></p>
 				<ul id="result_info_list"></ul>
 			</div>
+
+			<div class="row">
+				<p id="result_polygon"></p>
+				<ul id="result_point_list"></ul>
+			</div>
 		</div
 	</div>
 
@@ -80,6 +85,8 @@
 		var METER_PER_UNIT={MILE:1609.34, FOOT:0.3048,DEGREE:111194.87428468118, KM:1000};
 
 		var identifyLatlng;
+
+		var polygonLatLngs;
 		// var cities = new L.LayerGroup();
 
 		// L.marker([39.61, -105.02]).bindPopup('This is Littleton, CO.').addTo(cities),

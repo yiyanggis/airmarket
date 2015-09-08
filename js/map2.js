@@ -557,7 +557,26 @@ function initmap(mapdiv){
 				}
 			}
 
+			polygonLatLngs=layer.getLatLngs();
 
+			$("#result_polygon").text("mission boundary:");
+
+			var list=$("#result_point_list").empty();
+
+			$('<li/>')
+		        .html("<span>Mission radius: "+radius+" m</span>")
+		        .appendTo(list);
+
+		    $('<li/>')
+		        .html("<span>Mission center: "+radius+" m</span>")
+		        .appendTo(list);
+
+
+			$.each(polygonLatLngs,function(index,value){
+				 $('<li/>')
+		        .html("<span>"+value.lat+","+value.lng+"</span>")
+		        .appendTo(list);
+			});	
 
 			// draw circle
 			//circlePrimary set radius
@@ -575,6 +594,9 @@ function initmap(mapdiv){
 	});
 
 	map.on('draw:edited', function (e) {
+
+		drawnItems.clearLayers();
+
 		var layers = e.layers;
 		var countOfEditedLayers = 0;
 		layers.eachLayer(function(layer) {
@@ -744,7 +766,7 @@ function add_Circle(latlng, radius,map){
 
 		query_airspace_Circle(latlng.lat, latlng.lng,radius);
 
-		return circle;
+		return circlePrimary;
 	}
 	else{
 		return null;
