@@ -63,7 +63,10 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 	<script src="js/bootstrap.js"></script>
 	<script src="js/leaflet.draw-src.js"></script>
+	<script src="js/YY.js"></script>
+	<script src="js/conf.js"></script>
 	<script src="js/map2.js"></script>
+	<script src="js/api.js"></script>
 	<!--<script src="js/leaflet.control.orderlayers.js"></script>-->
 	<script src="js/leaflet-providers.js"></script>
 	<script src="js/Google.js"></script>
@@ -74,6 +77,10 @@
 		var criteria;
 		var airspace_data_b,airspace_data_c,airspace_data_d,airspace_data_e,airspace_data_f;
 		var airspace_b,airspace_c,airspace_d,airspace_e,airspace_f;
+
+		var airport_Point, airport_Buffer;
+
+		var layers={"airspace_b":airspace_b,"airspace_c":airspace_c,"airspace_d":airspace_d,"airspace_e":airspace_e,"airspace_f":airspace_f,"airport":airport_Point,"airport_Buffer":airport_Buffer};
 
 		var mapStatus=null;
 		var mapStatusMode={DrawPoint:1,Identify:2,Null:null};
@@ -108,35 +115,7 @@
 			//add_Point(20,20,map);
 
 			$("#drawMarkerBtn").click(function(){
-				$(this).toggleClass('btn-success')
-
-				if(mapStatus==null){
-					$('.leaflet-container').css('cursor','crosshair');
-					
-					mapStatus=mapStatusMode.DrawPoint;
-					//map.on('dblclick', onMapDrawPoint);
-					map.on('contextmenu', onMapDrawPoint_green);
-
-					airspace_b.on('contextmenu', onMapDrawPoint_orange);
-					airspace_c.on('contextmenu', onMapDrawPoint_orange);
-					airspace_d.on('contextmenu', onMapDrawPoint_orange);
-					airspace_e.on('contextmenu', onMapDrawPoint_orange);
-
-					airspace_f.on('contextmenu', onMapDrawPoint_red);
-				}
-				else if(mapStatus==mapStatusMode.DrawPoint){
-					$('.leaflet-container').css('cursor','-webkit-grab');
-					mapStatus=mapStatusMode.Null;
-					//map.off('dblclick', onMapDrawPoint);
-					map.off('contextmenu', onMapDrawPoint_green);
-
-					airspace_b.off('contextmenu', onMapDrawPoint_orange);
-					airspace_c.off('contextmenu', onMapDrawPoint_orange);
-					airspace_d.off('contextmenu', onMapDrawPoint_orange);
-					airspace_e.off('contextmenu', onMapDrawPoint_orange);
-
-					airspace_f.off('contextmenu', onMapDrawPoint_red);
-				}
+				toggleDrawPoint(this);
 			});
 
 			$("#identifyBtn").click(function(){

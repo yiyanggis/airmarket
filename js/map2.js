@@ -160,7 +160,7 @@ return value:
 function initmap(mapdiv){
 	var osmUrl='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 	var osmAttrib='Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
-	var osm = new L.TileLayer(osmUrl, {minZoom: 8, maxZoom: 12, attribution: osmAttrib});
+	var osm = new L.TileLayer(osmUrl, {attribution: osmAttrib});
 
 	var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 		attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
@@ -186,6 +186,18 @@ function initmap(mapdiv){
 
 	var air_port_cfs_heli=L.tileLayer.wms( "http://airmarket.gistemp.com/geoserver/airmarket/wms", {
 	    layers: 'airport_CFSheli',
+	    format: 'image/png',
+	    transparent: true
+	} );
+
+	airport_Point=L.tileLayer.wms( "http://airmarket.gistemp.com/geoserver/airmarket/wms", {
+	    layers: YY.airmarket.airport_point_layer,
+	    format: 'image/png',
+	    transparent: true
+	} );
+
+	airport_Buffer=L.tileLayer.wms( "http://airmarket.gistemp.com/geoserver/airmarket/wms", {
+	    layers: YY.airmarket.airport_buffer_layer,
 	    format: 'image/png',
 	    transparent: true
 	} );
@@ -461,9 +473,11 @@ function initmap(mapdiv){
 	var overlays = {
 		
 		//"Cities": cities,
-		"airport_was":air_port_was,
-		"airport_land":air_port_cfs_land,
-		"airport_heli":air_port_cfs_heli,
+		//"airport_was":air_port_was,
+		//"airport_land":air_port_cfs_land,
+		//"airport_heli":air_port_cfs_heli,
+		"airport":airport_Point,
+		"airport_buffer":airport_Buffer,
 		"airspace Class B":airspace_b,
 		"airspace Class C":airspace_c,
 		"airspace Class D":airspace_d,
@@ -472,6 +486,8 @@ function initmap(mapdiv){
 		
 		
 	};
+
+	layers={"airspace_b":airspace_b,"airspace_c":airspace_c,"airspace_d":airspace_d,"airspace_e":airspace_e,"airspace_f":airspace_f,"airport":airport_Point,"airport_Buffer":airport_Buffer};
 
 	var overlays_2={
 		"road":road
@@ -568,7 +584,7 @@ function initmap(mapdiv){
 		        .appendTo(list);
 
 		    $('<li/>')
-		        .html("<span>Mission center: "+radius+" m</span>")
+		        .html("<span>Mission center: "+marker.getLatLng().lat+","+marker.getLatLng().lng+"</span>")
 		        .appendTo(list);
 
 
@@ -778,7 +794,9 @@ function add_Circle(latlng, radius,map){
 function query_Circle(lat,lng, radius){
 	var radius_proj=radius/METER_PER_UNIT.DEGREE;
 
-	$.post("http://97.68.192.217:9000/test/airmarket/query.php",{"lng":lng,"lat":lat,"radius":radius_proj},function(data){
+	var url=buildQueryAirPortUrl();
+
+	$.post(url,{"lng":lng,"lat":lat,"radius":radius_proj},function(data){
 		console.log(data);
 		//var ul=$("#resultList");
 		//ul.empty();
@@ -823,7 +841,9 @@ function query_Circle(lat,lng, radius){
 function query_airspace_Circle(lat,lng, radius){
 	var radius_proj=radius/METER_PER_UNIT.DEGREE;
 
-	$.post("http://97.68.192.217:9000/test/airmarket/query_airspace.php",{"lng":lng,"lat":lat,"radius":radius_proj},function(data){
+	var url=buildQueryAirSpaceUrl();
+
+	$.post(url,{"lng":lng,"lat":lat,"radius":radius_proj},function(data){
 		console.log(data);
 
 		$("#result_info").text("Airspace around "+radius+" m:");
@@ -907,7 +927,7 @@ function onMapDrawPoint_green(e){
 
 function onMapIdentify(e){
 	identifyLatlng=e.latlng;
-	var url = getFeatureInfoUrl(e.latlng);
+	var url = getFeatureInfoUrl(e.latlng, "parseIdentify");
 	    //showResults = L.Util.bind(this.showGetFeatureInfo, this);
 
 	// $.ajax({
@@ -950,7 +970,7 @@ function parseIdentify(data) {
 }
 
 
-function getFeatureInfoUrl(latlng) {
+function getFeatureInfoUrl(latlng, callback) {
 	// Construct a GetFeatureInfo request URL given a point
 	var point = map.latLngToContainerPoint(latlng, map.getZoom()),
 	    size = map.getSize(),
@@ -967,11 +987,11 @@ function getFeatureInfoUrl(latlng) {
 	      x:point.x,
 	      y:point.y,
 	      format:'JSONP',
-	      layers: 'airmarket:airport_point',
-	      query_layers: 'airmarket:airport_point',
+	      layers: 'airmarket:cfs',
+	      query_layers: 'airmarket:cfs',
 	      info_format: 'text/javascript',
 	      outputFormat:'text/javascript',
-	      format_options:'callback:parseIdentify'
+	      format_options:'callback:'+callback//parseIdentify'
 	    };
 
 	return "http://airmarket.gistemp.com/geoserver/airmarket/wms"+ L.Util.getParamString(params);
