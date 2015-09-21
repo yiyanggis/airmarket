@@ -26,7 +26,7 @@
 			
 			<div class="row">
 				<div id="control">
-					<input type="text" class="form-control" id="filterInput" placeholder="1000">
+					<input type="text" class="form-control" id="filterInput" placeholder="10000">
 					<p><a class="btn btn-primary btn-lg" href="#" role="button" id="filterBtn">filter</a></p>
 				</div>
 			</div>
@@ -41,8 +41,8 @@
 				<div>
 					<!-- Provides extra visual weight and identifies the primary action in a set of buttons -->
 					<button id="drawMarkerBtn" type="button" class="btn btn-primary">draw marker</button>
-					<button id="drawCircle3mi" type="button" class="btn btn-primary">draw 3 mile circle</button>
-					<button id="drawCircle9mi" type="button" class="btn btn-primary">draw 9 mile circle</button>
+					<button id="drawCircle3mi" type="button" class="btn btn-primary">draw 3 km circle</button>
+					<button id="drawCircle9mi" type="button" class="btn btn-primary">draw 9 km circle</button>
 				</div>
 			</div>
 
@@ -78,6 +78,8 @@
 		var airspace_data_b,airspace_data_c,airspace_data_d,airspace_data_e,airspace_data_f;
 		var airspace_b,airspace_c,airspace_d,airspace_e,airspace_f;
 
+		var notamLayer;
+
 		var airport_Point, airport_Buffer;
 
 		var layers={"airspace_b":airspace_b,"airspace_c":airspace_c,"airspace_d":airspace_d,"airspace_e":airspace_e,"airspace_f":airspace_f,"airport":airport_Point,"airport_Buffer":airport_Buffer};
@@ -88,6 +90,7 @@
 		var marker;
 
 		var circlePrimary, circleFlyAway;
+		var primary_restricted, flyaway_restricted;
 
 		var METER_PER_UNIT={MILE:1609.34, FOOT:0.3048,DEGREE:111194.87428468118, KM:1000};
 
@@ -135,11 +138,11 @@
 			});
 
 			$("#drawCircle3mi").click(function(){
-				add_Circle(marker.getLatLng(), 1.5*METER_PER_UNIT.KM,map)
+				add_primary_Circle(marker.getLatLng(), 1.5*METER_PER_UNIT.KM,map);
 			});
 
 			$("#drawCircle9mi").click(function(){
-				add_Circle(marker.getLatLng(), 4.5*METER_PER_UNIT.KM,map)
+				add_flyaway_Circle(marker.getLatLng(), 4.5*METER_PER_UNIT.KM,map);
 			});
 		});
 		

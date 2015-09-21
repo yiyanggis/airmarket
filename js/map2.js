@@ -203,7 +203,7 @@ function initmap(mapdiv){
 	} );
 
 
-	$("#filterInput").val(1000);
+	$("#filterInput").val(10000);
 	criteria=parseInt($("#filterInput").val());
 
 	airspace_b=L.geoJson(null,{
@@ -315,6 +315,8 @@ function initmap(mapdiv){
 			//return feature.properties.show_on_map;
 		}
 	});
+
+	notamLayer=L.layerGroup(null);
 
 	//$.post
 	var data_b={
@@ -476,6 +478,7 @@ function initmap(mapdiv){
 		//"airport_was":air_port_was,
 		//"airport_land":air_port_cfs_land,
 		//"airport_heli":air_port_cfs_heli,
+		"notam":notamLayer,
 		"airport":airport_Point,
 		"airport_buffer":airport_Buffer,
 		"airspace Class B":airspace_b,
@@ -619,6 +622,67 @@ function initmap(mapdiv){
 			countOfEditedLayers++;
 		});
 		console.log("Edited " + countOfEditedLayers + " layers");
+	});
+
+	map.on('moveend',function(e){
+		console.log("pan end");
+		//query notam
+		var bounds=map.getBounds();
+
+		var extent={
+			"north":bounds.getNorth(),
+			"south":bounds.getSouth(),
+			"east":bounds.getEast(),
+			"west":bounds.getWest()
+		};
+
+		//var url="http://www.zuluforpilots.com/AreaApi/GetAreaOverview?north=43.79463912197183&east=-79.25260219886718&south=43.69890445221393&west=-80.2317586930078&zoomLevel=1";
+		var url="http://localhost/test/airmarket/notam.php";
+		var url2="http://localhost/test/airmarket/notam_detail.php";
+		$.post(url,extent,function(data){
+			console.log(data);
+			notamLayer.clearLayers();
+			$.each(data.Items,function(index,value){
+				var center=[value.Location.Latitude,value.Location.Longitude];
+				var marker=L.marker(center,{
+					icon:L.icon({
+					    iconUrl: 'images/map_Heli_red.png',
+					    iconSize: [25, 25],
+					    iconAnchor: [12, 12],
+					    popupAnchor: [0, -10]
+					    //shadowUrl: 'my-icon-shadow.png',
+					    //shadowRetinaUrl: 'my-icon-shadow@2x.png',
+					    //shadowSize: [68, 95],
+					    //shadowAnchor: [22, 94]
+					})
+				});
+				marker.on('click',function(ee){
+					$.post(url2,{"code":value.Code},function(data){
+						console.log(data);
+						//marker.bindPopup("ValidDateTime:"+data.ValidDateTime);
+						var popup = L.popup()
+					    .setLatLng(ee.latlng)
+					    .setContent('<p>Code:'+value.Code+'</p><p>ValidDateTime:'+data.ValidDateTime+'</p>')
+					    .openOn(map);
+					});
+					//marker.bindPopup(value.Code);
+				});
+				notamLayer.addLayer(marker);
+			});
+		});
+
+		// $.ajax({
+		//   url: url,
+		//   dataType:'jsonp',
+		//   jsonpCallback:'getJson',
+		//   success: function (data, status, xhr) {
+		//     //var err = typeof data === 'string' ? null : data;
+		//     //showGetFeatureInfo(err, latlng, data);
+		//   },
+		//   error: function (xhr, status, error) {
+		//     //showGetFeatureInfo(error);  
+		//   }
+		// });
 	});
 
 	return map;
@@ -771,18 +835,44 @@ function add_Point_Red(lat, lng, map){
 	}
 }
 
-function add_Circle(latlng, radius,map){
+function add_primary_Circle(latlng, radius,map){
 	//validate latlng
 	if(validateLatLng(latlng)){
 		circlePrimary=L.circle(latlng,radius)
 			.bindPopup(latlng.lat+", "+latlng.lng+": "+radius);
 		circlePrimary.addTo(map);
 
-		query_Circle(latlng.lat, latlng.lng,radius);
+		//query_Circle(latlng.lat, latlng.lng,radius);
+		primary_restricted=false;
 
-		query_airspace_Circle(latlng.lat, latlng.lng,radius);
+		query_airspace_primary_Circle(latlng.lat, latlng.lng,radius);
+
+		query_airport_primary_Circle(latlng.lat, latlng.lng,radius);
 
 		return circlePrimary;
+	}
+	else{
+		return null;
+	}
+
+
+}
+
+function add_flyaway_Circle(latlng, radius,map){
+	//validate latlng
+	if(validateLatLng(latlng)){
+		circleFlyAway=L.circle(latlng,radius)
+			.bindPopup(latlng.lat+", "+latlng.lng+": "+radius);
+		circleFlyAway.addTo(map);
+
+		//query_Circle(latlng.lat, latlng.lng,radius);
+		flyaway_restricted=false;
+
+		query_airspace_flyaway_Circle(latlng.lat, latlng.lng,radius);
+
+		query_airport_flyaway_Circle(latlng.lat, latlng.lng,radius);
+
+		return circleFlyAway;
 	}
 	else{
 		return null;
@@ -802,7 +892,7 @@ function query_Circle(lat,lng, radius){
 		//ul.empty();
 		$.each(data,function(index,value){
 			console.log(value);
-			var marker=L.marker([value[2],value[3]],{
+			var marker=L.marker([value[24],value[25]],{
 				icon:L.icon({
 				    iconUrl: 'resources/plane.png',
 				    iconSize: [25, 25],
@@ -813,7 +903,7 @@ function query_Circle(lat,lng, radius){
 				    //shadowSize: [68, 95],
 				    //shadowAnchor: [22, 94]
 				})
-			}).bindPopup(value[0]+","+value[1]+", type:"+value[4]);
+			}).bindPopup(value[0]+","+value[1]+", type:"+value[26]);
 			marker.addTo(map);
 			// var temp=new google.maps.Marker({
 			// 	position:new google.maps.LatLng(value[2],value[3]),
@@ -838,7 +928,119 @@ function query_Circle(lat,lng, radius){
 	});
 }
 
-function query_airspace_Circle(lat,lng, radius){
+function query_airport_primary_Circle(lat,lng, radius){
+	var radius_proj=radius/METER_PER_UNIT.DEGREE;
+
+	var url=buildQueryAirPortUrl();
+
+	$.post(url,{"lng":lng,"lat":lat,"radius":radius_proj},function(data){
+		console.log(data);
+
+		if(data.length>0){
+			primary_restricted=true;
+		}
+
+		if(primary_restricted){
+			marker.setIcon(
+				new L.icon({
+			    iconUrl: 'images/marker-hole-red.png',
+			    //iconRetinaUrl: 'my-icon@2x.png',
+			    iconSize: [32, 50],
+			    iconAnchor: [16, 50],
+			    popupAnchor: [0, -40],
+			    shadowUrl: 'images/marker-shadow.png',
+			    //shadowRetinaUrl: 'my-icon-shadow@2x.png',
+			    shadowSize: [50, 50],
+			    shadowAnchor: [16, 50]
+			}));
+
+			circlePrimary.setStyle({
+			    fillColor: "#ff0000",
+			    color: "#000",
+			    weight: 1,
+			    opacity: 1,
+			    fillOpacity: 0.4
+			});
+		}
+
+		$.each(data,function(index,value){
+			console.log(value);
+			var marker=L.marker([value[24],value[25]],{
+				icon:L.icon({
+				    iconUrl: 'resources/plane.png',
+				    iconSize: [25, 25],
+				    iconAnchor: [12, 12],
+				    popupAnchor: [0, -10]
+				})
+			}).bindPopup(value[0]+","+value[1]+", type:"+value[26]);
+			marker.addTo(map);
+
+			result_markers.push(marker);
+		});
+	});
+}
+
+function query_airport_flyaway_Circle(lat,lng, radius){
+	var radius_proj=radius/METER_PER_UNIT.DEGREE;
+
+	var url=buildQueryAirPortUrl();
+
+	$.post(url,{"lng":lng,"lat":lat,"radius":radius_proj},function(data){
+		console.log(data);
+
+		if(data.length>0){
+			flyaway_restricted=true;
+		}
+
+		if(flyaway_restricted){
+			if(primary_restricted){
+
+			}
+			else{
+				marker.setIcon(
+				new L.icon({
+			    iconUrl: 'images/marker-hole-orange.png',
+			    //iconRetinaUrl: 'my-icon@2x.png',
+			    iconSize: [32, 50],
+			    iconAnchor: [16, 50],
+			    popupAnchor: [0, -40],
+			    shadowUrl: 'images/marker-shadow.png',
+			    //shadowRetinaUrl: 'my-icon-shadow@2x.png',
+			    shadowSize: [50, 50],
+			    shadowAnchor: [16, 50]
+			}));
+			}
+			
+
+			circleFlyAway.setStyle({
+			    fillColor: "#ffff00",
+			    color: "#000",
+			    weight: 1,
+			    opacity: 1,
+			    fillOpacity: 0.4
+			});
+		}
+
+		$.each(data,function(index,value){
+			console.log(value);
+			var marker=L.marker([value[24],value[25]],{
+				icon:L.icon({
+				    iconUrl: 'resources/plane.png',
+				    iconSize: [25, 25],
+				    iconAnchor: [12, 12],
+				    popupAnchor: [0, -10]
+				})
+			}).bindPopup(value[0]+","+value[1]+", type:"+value[26]);
+			marker.addTo(map);
+
+			result_markers.push(marker);
+		});
+	});
+}
+
+
+
+function query_airspace_primary_Circle(lat,lng, radius){
 	var radius_proj=radius/METER_PER_UNIT.DEGREE;
 
 	var url=buildQueryAirSpaceUrl();
@@ -850,12 +1052,96 @@ function query_airspace_Circle(lat,lng, radius){
 
 		var list=$("#result_info_list").empty();
 
+		
 
 		$.each(data,function(index,value){
+			if(value[0]=='F'){
+				primary_restricted=true;
+			}
+			$('<li/>')
+	        .html("<span>Class:"+value[0]+", floor:"+value[2]+", ceiling:"+value[3]+"</span>")
+	        .appendTo(list);
+		});
+
+		if(primary_restricted){
+			marker.setIcon(
+				new L.icon({
+			    iconUrl: 'images/marker-hole-red.png',
+			    //iconRetinaUrl: 'my-icon@2x.png',
+			    iconSize: [32, 50],
+			    iconAnchor: [16, 50],
+			    popupAnchor: [0, -40],
+			    shadowUrl: 'images/marker-shadow.png',
+			    //shadowRetinaUrl: 'my-icon-shadow@2x.png',
+			    shadowSize: [50, 50],
+			    shadowAnchor: [16, 50]
+			}));
+
+			circlePrimary.setStyle({
+			    fillColor: "#ff0000",
+			    color: "#000",
+			    weight: 1,
+			    opacity: 1,
+			    fillOpacity: 0.4
+			});
+		}
+
+	});
+}
+
+function query_airspace_flyaway_Circle(lat,lng, radius){
+	var radius_proj=radius/METER_PER_UNIT.DEGREE;
+
+	var url=buildQueryAirSpaceUrl();
+
+	$.post(url,{"lng":lng,"lat":lat,"radius":radius_proj},function(data){
+		console.log(data);
+
+		$("#result_info").text("Airspace around "+radius+" m:");
+
+		var list=$("#result_info_list").empty();
+
+		
+
+		$.each(data,function(index,value){
+
+			if(value[0]=='F'){
+				flyaway_restricted=true;
+			}
+
 			 $('<li/>')
 	        .html("<span>Class:"+value[0]+", floor:"+value[2]+", ceiling:"+value[3]+"</span>")
 	        .appendTo(list);
 		});
+
+		if(flyaway_restricted){
+			if(primary_restricted){
+
+			}
+			else{
+				marker.setIcon(
+				new L.icon({
+			    iconUrl: 'images/marker-hole-orange.png',
+			    //iconRetinaUrl: 'my-icon@2x.png',
+			    iconSize: [32, 50],
+			    iconAnchor: [16, 50],
+			    popupAnchor: [0, -40],
+			    shadowUrl: 'images/marker-shadow.png',
+			    //shadowRetinaUrl: 'my-icon-shadow@2x.png',
+			    shadowSize: [50, 50],
+			    shadowAnchor: [16, 50]
+			}));
+			}
+			
+
+			circleFlyAway.setStyle({
+			    fillColor: "#ffff00",
+			    color: "#000",
+			    weight: 1,
+			    opacity: 1,
+			    fillOpacity: 0.4
+			});
+		}
 
 	});
 }

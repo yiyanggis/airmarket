@@ -22,7 +22,8 @@ $db_conn=pg_connect($connection_string) or die ("Could not connect to server\n")
 
 //$query = "SELECT station, \"city or to\", \"lat.\", \"long.\",type FROM airport_merge where ST_Intersects(ST_SetSRID(ST_POINT(".$lng.",".$lat."),4326)::geography, airport_merge.geom)";
 //SELECT * from public.airport_point where ST_Intersects(ST_Buffer(ST_SetSRID(ST_POINT(-93,52.4),4326),0.2),airport_point.geom);
-$query = "select station, \"city or to\", \"province\", \"current ma\", \"utc\",\"elev.\",\"aeronautic\",\"aerodrome\",\"notam\",\"fic\",\"acc\",\"wx\",\"runway 1\",\"runway 2\",\"runway 3\",\"runway 4\",\"runway 5\",\"atis\",\"gnd\",\"twr\",\"mf\",\"atf\",\"pro\",\"caution\",\"lat.\", \"long.\",type from public.airport_point where ST_Intersects(ST_Buffer(ST_SetSRID(ST_POINT(".$lng.",".$lat."),4326),".$radius."),airport_point.geom);";
+//$query = "select station, \"city or to\", \"province\", \"current ma\", \"utc\",\"elev.\",\"aeronautic\",\"aerodrome\",\"notam\",\"fic\",\"acc\",\"wx\",\"runway 1\",\"runway 2\",\"runway 3\",\"runway 4\",\"runway 5\",\"atis\",\"gnd\",\"twr\",\"mf\",\"atf\",\"pro\",\"caution\",\"lat.\", \"long.\",type from public.cfs_buffer_84 where ST_Intersects(ST_Buffer(ST_SetSRID(ST_POINT(".$lng.",".$lat."),4326),".$radius."),airport_point.geom);";
+$query = "select station, \"city_or_to\", \"province\", \"current_ma\", \"utc\",\"elev_\",\"aeronautic\",\"aerodrome\",\"notam\",\"fic\",\"acc\",\"wx\",\"runway_1\",\"runway_2\",\"runway_3\",\"runway_4\",\"runway_5\",\"atis\",\"gnd\",\"twr\",\"mf\",\"atf\",\"pro\",\"caution\",\"lat_\", \"long_\",type from public.cfs_buffer_84 where ST_Intersects(ST_Buffer(ST_SetSRID(ST_POINT(".$lng.",".$lat."),4326),".$radius."),cfs_buffer_84.geom);";
 
 $rs = pg_query($db_conn, $query) or die("Cannot execute query: $query\n");
 
