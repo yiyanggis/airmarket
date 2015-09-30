@@ -18,7 +18,10 @@ $lng=$_POST["lng"];
 $radius=$_POST["radius"];
 
 $connection_string="host=".$servername." port=5432 dbname=".$dbname." user=".$username." password=".$password;
+//echo "test";
 $db_conn=pg_connect($connection_string) or die ("Could not connect to server\n");
+
+//echo "test2";
 
 //$query = "SELECT station, \"city or to\", \"lat.\", \"long.\",type FROM airport_merge where ST_Intersects(ST_SetSRID(ST_POINT(".$lng.",".$lat."),4326)::geography, airport_merge.geom)";
 //SELECT * from public.airport_point where ST_Intersects(ST_Buffer(ST_SetSRID(ST_POINT(-93,52.4),4326),0.2),airport_point.geom);

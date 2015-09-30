@@ -2,11 +2,14 @@ YY=YY||{};
 
 YY.airmarket={
 	//host:"97.68.192.217",
-	//host:"166.62.82.16",
-	host:"localhost",
+	//http://airmarket.ca/leaflet-dev/airmarket/airmarket.html
+	host:"166.62.82.16",
+	//host:"airmarket.ca",
+	//host:"localhost",
 	//port:9000,
 	port:"",
-	path:"/test/airmarket/",
+	path:"/airmarket/",
+	//path:"/leaflet-dev/airmarket/",
 	query_airspace:"query_airspace.php",
 	query_airport:"query_airport.php",
 	airport_buffer:9.26,

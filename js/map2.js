@@ -637,8 +637,8 @@ function initmap(mapdiv){
 		};
 
 		//var url="http://www.zuluforpilots.com/AreaApi/GetAreaOverview?north=43.79463912197183&east=-79.25260219886718&south=43.69890445221393&west=-80.2317586930078&zoomLevel=1";
-		var url="http://localhost/test/airmarket/notam.php";
-		var url2="http://localhost/test/airmarket/notam_detail.php";
+		var url="http://"+YY.airmarket.host+YY.airmarket.path+"notam.php";
+		var url2="http://"+YY.airmarket.host+YY.airmarket.path+"notam_detail.php";
 		$.post(url,extent,function(data){
 			console.log(data);
 			notamLayer.clearLayers();
